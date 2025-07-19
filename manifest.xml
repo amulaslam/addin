@@ -10,9 +10,9 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Email Classification Add-in" />
   <Description DefaultValue="Classifies and archives outgoing emails to SharePoint." />
-  <IconUrl DefaultValue="http://127.0.0.1:3000/icon-64.png" />
-<HighResolutionIconUrl DefaultValue="http://127.0.0.1:3000/icon-128.png" />
-<SourceLocation DefaultValue="http://127.0.0.1:3000/taskpane.html" />
+  <IconUrl DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/icon-64.png" />
+  <HighResolutionIconUrl DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/icon-128.png" />
+  <SupportUrl DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/support" />
   <AppDomains>
     <AppDomain>https://login.microsoftonline.com</AppDomain>
     <AppDomain>https://graph.microsoft.com</AppDomain>
@@ -28,7 +28,7 @@
   <FormSettings>
     <Form xsi:type="ItemEdit">
       <DesktopSettings>
-        <SourceLocation DefaultValue="http://127.0.0.1:3000/taskpane.html" />
+        <SourceLocation DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/taskpane.html" />
       </DesktopSettings>
     </Form>
   </FormSettings>
