@@ -2,6 +2,7 @@
     "use strict";
 
     Office.onReady(() => {
+        Office.context.mailbox.addHandler(Office.EventType.ItemSend, onMessageSend);
         loadDropdowns();
         updateSubjectField();
     });
@@ -11,26 +12,36 @@
 
     async function loadDropdowns() {
         try {
-            // Placeholder: Fetch data from SharePoint (needs customization)
+            await acquireToken();
             const projectDropdown = document.getElementById("projectDropdown");
-            // Add sample data for testing
-            const sampleProjects = [
-                { id: "P-123", name: "Project Alpha" },
-                { id: "P-456", name: "Project Beta" }
-            ];
-            sampleProjects.forEach(project => {
+            const categoryDropdown = document.getElementById("categoryDropdown");
+            const subcategoryDropdown = document.getElementById("subcategoryDropdown");
+
+            // Fetch SharePoint list data (replace with your site and list IDs)
+            const response = await axios.get("https://graph.microsoft.com/v1.0/sites/your-site-id/lists/your-list-id/items", {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+
+            response.data.value.forEach(item => {
                 const option = document.createElement("option");
-                option.value = project.id;
-                option.text = project.name;
+                option.value = item.fields.ProjectID;
+                option.text = item.fields.ProjectName;
                 projectDropdown.appendChild(option);
             });
 
-            // Update subject when dropdowns change
-            document.getElementById("projectDropdown").addEventListener("change", updateSubjectField);
-            document.getElementById("categoryDropdown").addEventListener("change", updateSubjectField);
-            document.getElementById("subcategoryDropdown").addEventListener("change", updateSubjectField);
+            projectDropdown.addEventListener("change", updateSubjectField);
+            categoryDropdown.addEventListener("change", updateSubjectField);
+            subcategoryDropdown.addEventListener("change", updateSubjectField);
         } catch (error) {
             console.error("Error loading dropdowns:", error);
+        }
+    }
+
+    async function acquireToken() {
+        try {
+            accessToken = await OfficeRuntime.auth.getAccessToken({ allowSignInPrompt: true });
+        } catch (error) {
+            console.error("Error acquiring token:", error);
         }
     }
 
@@ -81,8 +92,7 @@
             currentItem.subject.setAsync(subjectField, async result => {
                 if (result.status === Office.AsyncResultStatus.Succeeded) {
                     event.completed({ allowEvent: true });
-                    // Placeholder: Archive email (needs customization)
-                    console.log("Email would be archived to SharePoint");
+                    await archiveEmail();
                 } else {
                     event.completed({ allowEvent: false });
                 }
@@ -108,7 +118,27 @@
         updateSubjectField();
     }
 
-    // Button event listeners
+    async function archiveEmail() {
+        try {
+            const project = document.getElementById("projectDropdown").value;
+            const subjectField = document.getElementById("subjectField").value;
+            const emlContent = await getEmailAsEml(); // Placeholder
+            const folderPath = `sites/Projects/${project}/Emails`;
+            await axios.post(
+                `https://graph.microsoft.com/v1.0/sites/your-site-id/drive/root:/${folderPath}/${new Date().toISOString().split("T")[0]}_${subjectField}.eml:/content`,
+                emlContent,
+                { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "message/rfc822" } }
+            );
+        } catch (error) {
+            console.error("Error archiving email:", error);
+        }
+    }
+
+    async function getEmailAsEml() {
+        // Placeholder: Replace with actual Graph API call to get MIME content
+        return "MIME-Version: 1.0\nContent-Type: text/plain\nSubject: Example\n\nSample email content";
+    }
+
     document.getElementById("sendButton").addEventListener("click", () => {
         Office.context.ui.messageParent(JSON.stringify({ action: "send" }));
     });
@@ -122,6 +152,4 @@
     document.getElementById("dontSendButton").addEventListener("click", () => {
         Office.context.ui.messageParent(JSON.stringify({ action: "dontSend" }));
     });
-
-    Office.context.mailbox.addHandler(Office.EventType.ItemSend, onMessageSend);
 })();
