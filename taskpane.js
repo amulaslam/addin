@@ -1,71 +1,169 @@
-Office.onReady(info => {
-  if (info.host === Office.HostType.Outlook) {
-    loadDropdownData();
-  }
-});
+(function () {
+    "use strict";
 
-async function loadDropdownData() {
-  try {
-    const accessToken = await OfficeRuntime.auth.getAccessToken({ allowSignInPrompt: true });
     const siteId = "alaaliinternational.sharepoint.com,9ffde265-4f33-4f30-84b7-ea0fd5de1655,db811aa3-e2b7-4004-b2c4-8ae99904dca9";
     const listId = "86a3f828-4843-42cd-bc00-20f98b531d66";
+    let accessToken;
+    let currentItem;
 
-    const response = await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists/${listId}/items?expand=fields`, {
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Accept": "application/json"
-      }
+    Office.onReady(() => {
+        Office.context.mailbox.addHandler(Office.EventType.ItemSend, onMessageSend);
+        loadDropdowns();
+        updateSubjectField();
     });
 
-    if (!response.ok) {
-      throw new Error("Graph API request failed");
+    async function acquireToken() {
+        try {
+            accessToken = await OfficeRuntime.auth.getAccessToken({ allowSignInPrompt: true });
+        } catch (error) {
+            console.error("Error acquiring token:", error);
+        }
     }
 
-    const data = await response.json();
-    const items = data.value;
+    async function loadDropdowns() {
+        await acquireToken();
 
-    // Clear dropdowns
-    clearDropdown("emailTopic");
-    clearDropdown("emailSubtopic");
-    clearDropdown("emailClassification");
+        try {
+            const res = await axios.get(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists/${listId}/items?expand=fields`, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
 
-    items.forEach(item => {
-      const fields = item.fields;
-      if (fields.EmailTopic) {
-        addOption("emailTopic", fields.EmailTopic);
-      }
-      if (fields.EmailSubtopic) {
-        addOption("emailSubtopic", fields.EmailSubtopic);
-      }
-      if (fields.EmailClassification) {
-        addOption("emailClassification", fields.EmailClassification);
-      }
-    });
-  } catch (error) {
-    console.error("Error fetching SharePoint list data:", error);
-    showMessage("Failed to load dropdown data. Please check permissions or list setup.");
-  }
-}
+            const items = res.data.value;
 
-function clearDropdown(id) {
-  const dropdown = document.getElementById(id);
-  dropdown.innerHTML = "<option value=''>--Select--</option>";
-}
+            const projectDropdown = document.getElementById("projectDropdown");
+            const categoryDropdown = document.getElementById("categoryDropdown");
+            const subcategoryDropdown = document.getElementById("subcategoryDropdown");
 
-function addOption(id, text) {
-  const dropdown = document.getElementById(id);
-  const option = document.createElement("option");
-  option.value = text;
-  option.text = text;
-  dropdown.appendChild(option);
-}
+            items.forEach(item => {
+                const fields = item.fields;
 
-function showMessage(message) {
-  const msg = document.getElementById("statusMessage");
-  if (msg) {
-    msg.textContent = message;
-    msg.style.display = "block";
-  } else {
-    alert(message);
-  }
-}
+                // Populate Project
+                if (fields.ProjectName) {
+                    const option = document.createElement("option");
+                    option.value = fields.ProjectName;
+                    option.text = fields.ProjectName;
+                    projectDropdown.appendChild(option);
+                }
+
+                // Populate Category
+                if (fields.Category && !Array.from(categoryDropdown.options).some(o => o.value === fields.Category)) {
+                    const option = document.createElement("option");
+                    option.value = fields.Category;
+                    option.text = fields.Category;
+                    categoryDropdown.appendChild(option);
+                }
+
+                // Populate Subcategory
+                if (fields.Subcategory && !Array.from(subcategoryDropdown.options).some(o => o.value === fields.Subcategory)) {
+                    const option = document.createElement("option");
+                    option.value = fields.Subcategory;
+                    option.text = fields.Subcategory;
+                    subcategoryDropdown.appendChild(option);
+                }
+            });
+
+            projectDropdown.addEventListener("change", updateSubjectField);
+            categoryDropdown.addEventListener("change", updateSubjectField);
+            subcategoryDropdown.addEventListener("change", updateSubjectField);
+        } catch (error) {
+            console.error("Error loading SharePoint data:", error);
+        }
+    }
+
+    function updateSubjectField() {
+        const project = document.getElementById("projectDropdown").value;
+        const category = document.getElementById("categoryDropdown").value;
+        const subcategory = document.getElementById("subcategoryDropdown").value;
+        const subjectField = document.getElementById("subjectField");
+
+        Office.context.mailbox.item.subject.getAsync(result => {
+            if (result.status === Office.AsyncResultStatus.Succeeded) {
+                let prefix = "";
+                if (project) prefix += `[${project}]`;
+                if (category) prefix += `[${category}]`;
+                if (subcategory) prefix += `[${subcategory}]`;
+                subjectField.value = prefix + (prefix ? " " : "") + result.value;
+            }
+        });
+    }
+
+    function onMessageSend(event) {
+        currentItem = Office.context.mailbox.item;
+        Office.context.ui.displayDialogAsync(
+            window.location.origin + "/taskpane.html",
+            { height: 50, width: 30, displayInIframe: true },
+            result => {
+                if (result.status === Office.AsyncResultStatus.Succeeded) {
+                    const dialog = result.value;
+                    dialog.addEventHandler(Office.EventType.DialogMessageReceived, args => {
+                        const message = JSON.parse(args.message);
+                        handleDialogMessage(message, event, dialog);
+                    });
+                } else {
+                    event.completed({ allowEvent: true });
+                }
+            }
+        );
+        event.completed({ allowEvent: false });
+    }
+
+    async function handleDialogMessage(message, event, dialog) {
+        if (message.action === "send") {
+            if (!document.getElementById("projectDropdown").value) {
+                document.getElementById("errorMessage").style.display = "block";
+                return;
+            }
+
+            const subjectField = document.getElementById("subjectField").value;
+            currentItem.subject.setAsync(subjectField, async result => {
+                if (result.status === Office.AsyncResultStatus.Succeeded) {
+                    await archiveEmail();
+                    event.completed({ allowEvent: true });
+                } else {
+                    event.completed({ allowEvent: false });
+                }
+                dialog.close();
+            });
+        } else if (message.action === "reset") {
+            resetForm();
+        } else if (message.action === "ignore") {
+            event.completed({ allowEvent: true });
+            dialog.close();
+        } else if (message.action === "dontSend") {
+            event.completed({ allowEvent: false });
+            dialog.close();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById("projectDropdown").value = "";
+        document.getElementById("categoryDropdown").value = "";
+        document.getElementById("subcategoryDropdown").value = "";
+        document.querySelectorAll('input[name="audience"]').forEach(radio => radio.checked = false);
+        document.getElementById("errorMessage").style.display = "none";
+        updateSubjectField();
+    }
+
+    async function archiveEmail() {
+        try {
+            const project = document.getElementById("projectDropdown").value;
+            const subjectField = document.getElementById("subjectField").value;
+            const emlContent = await getEmailAsEml();
+            const folderPath = `sites/Projects/${project}/Emails`;
+
+            await axios.put(
+                `https://graph.microsoft.com/v1.0/sites/${siteId}/drive/root:/${folderPath}/${new Date().toISOString().split("T")[0]}_${subjectField}.eml:/content`,
+                emlContent,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "message/rfc822"
+                    }
+                }
+            );
+        } catch (error) {
+            console.error("Error archiving email:", error);
+        }
+    }
+
+    async function get
