@@ -166,4 +166,27 @@
         }
     }
 
-    async function get
+    async function getEmailAsEml() {
+        // Placeholder for actual email export logic
+        return "MIME-Version: 1.0\nContent-Type: text/plain\nSubject: Sample\n\nThis is a test email.";
+    }
+
+    // UI button event listeners
+    document.getElementById("sendButton").addEventListener("click", () => {
+        Office.context.ui.messageParent(JSON.stringify({ action: "send" }));
+    });
+
+    document.getElementById("resetButton").addEventListener("click", () => {
+        resetForm();
+        Office.context.ui.messageParent(JSON.stringify({ action: "reset" }));
+    });
+
+    document.getElementById("ignoreButton").addEventListener("click", () => {
+        Office.context.ui.messageParent(JSON.stringify({ action: "ignore" }));
+    });
+
+    document.getElementById("dontSendButton").addEventListener("click", () => {
+        Office.context.ui.messageParent(JSON.stringify({ action: "dontSend" }));
+    });
+
+})();
