@@ -47,10 +47,7 @@
 
   <DisableEntityHighlighting>true</DisableEntityHighlighting>
 
-  <!-- This is the crucial nested VersionOverrides structure from your working example -->
-  <!-- The outer VersionOverrides uses the base mailappversionoverrides namespace -->
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
-    <!-- The inner VersionOverrides uses the specific mailappversionoverrides/1.1 namespace -->
     <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
       <Requirements>
         <bt:Sets DefaultMinVersion="1.10">
@@ -60,10 +57,8 @@
       <Hosts>
         <Host xsi:type="MailHost">
           <DesktopFormFactor>
-            <!-- FunctionFile for background logic (e.g., OnMessageSend handler) -->
             <FunctionFile resid="functionFileUrl"/>
 
-            <!-- ExtensionPoint for a button in the Message Compose ribbon -->
             <ExtensionPoint xsi:type="MessageComposeCommandSurface">
               <OfficeTab id="TabDefault">
                 <Group id="msgComposeGroup">
@@ -87,34 +82,25 @@
               </OfficeTab>
             </ExtensionPoint>
 
-            <!-- ExtensionPoint for handling events like OnMessageSend -->
-            <ExtensionPoint xsi:type="Events">
-              <Event Type="OnMessageSend" FunctionExecution="synchronous" FunctionName="onMessageSendHandler"/>
-            </ExtensionPoint>
           </DesktopFormFactor>
         </Host>
       </Hosts>
       <Resources>
         <bt:Images>
-          <!-- Icons for the ribbon button -->
           <bt:Image id="Icon.16x16" DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/icon-16.png"/>
           <bt:Image id="Icon.32x32" DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/icon-32.png"/>
           <bt:Image id="Icon.80x80" DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/icon-80.png"/>
         </bt:Images>
         <bt:Urls>
-          <!-- URLs for your function file and task pane -->
           <bt:Url id="functionFileUrl" DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/functions.html"/>
           <bt:Url id="Taskpane.Url" DefaultValue="https://ashy-field-0c780e010.2.azurestaticapps.net/taskpane.html"/>
         </bt:Urls>
         <bt:ShortStrings>
-          <!-- Short strings for UI elements -->
           <bt:String id="GroupLabel" DefaultValue="Email Classification"/>
           <bt:String id="TaskpaneButton.Label" DefaultValue="Classify Email"/>
         </bt:ShortStrings>
         <bt:LongStrings>
-          <!-- Long strings for UI elements (tooltips) -->
           <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Classify the email before sending."/>
-          <!-- Moved residDescription here as it's a string, not a URL -->
           <bt:String id="residDescription" DefaultValue="Classifies and archives outgoing emails to SharePoint."/>
         </bt:LongStrings>
       </Resources>
