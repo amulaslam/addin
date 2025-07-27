@@ -9,23 +9,60 @@
     html, body {
         height: 100%;
         margin: 0;
-        padding: 10px;
+        padding: 0;
         font-family: Arial, sans-serif;
-        overflow: hidden; /* Prevent full-page scroll */
+        overflow: hidden;
     }
 
     .container {
         height: 100%;
+        padding: 10px;
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
-        overflow-y: auto; /* Scroll only inside container if needed */
+        justify-content: space-between;
     }
 
-    .subject-field { margin-top: 10px; }
-    .buttons { margin-top: 15px; }
-    .error { color: red; display: none; margin-top: 10px; }
+    .mb-3 {
+        margin-bottom: 10px;
+    }
+
+    .subject-field {
+        margin-top: 10px;
+    }
+
+    .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .error {
+        color: red;
+        display: none;
+        margin-top: 10px;
+    }
+
+    select, input[type="text"] {
+        font-size: 14px;
+    }
+
+    h3 {
+        margin-bottom: 10px;
+        font-size: 18px;
+    }
+
+    label {
+        font-size: 14px;
+    }
+
+    button {
+        flex: 1;
+        min-width: 100px;
+    }
 </style>
+
 
 </head>
 <body>
