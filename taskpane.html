@@ -4,12 +4,29 @@
     <meta charset="UTF-8">
     <title>Email Classification Add-in</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { padding: 20px; font-family: Arial, sans-serif; }
-        .subject-field { margin-top: 15px; }
-        .buttons { margin-top: 20px; }
-        .error { color: red; display: none; margin-top: 10px; }
-    </style>
+    
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 10px;
+        font-family: Arial, sans-serif;
+        overflow: hidden; /* Prevent full-page scroll */
+    }
+
+    .container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow-y: auto; /* Scroll only inside container if needed */
+    }
+
+    .subject-field { margin-top: 10px; }
+    .buttons { margin-top: 15px; }
+    .error { color: red; display: none; margin-top: 10px; }
+</style>
+
 </head>
 <body>
     <div class="container">
